@@ -1,11 +1,27 @@
-Jenkinsfile (Declarative Pipeline)
-/* Requires the Docker Pipeline plugin */
 pipeline {
-    agent { docker { image 'maven:3.9.6-eclipse-temurin-17-alpine' } }
+    agent any
+    options {
+        skipStagesAfterUnstable()
+    }
     stages {
-        stage('build') {
+        stage('Build') {
             steps {
-                sh 'mvn --version'
+                sh 'mvn -B -DskipTests clean package'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Deliver') { 
+            steps {
+                sh './jenkins/scripts/deliver.sh' 
             }
         }
     }
